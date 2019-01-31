@@ -1,21 +1,64 @@
-Changes in Riot 0.8.21 (2018-XX-XX)
+Changes in Riot 0.8.22 (2019-XX-XX)
 ===================================================
 
 MatrixSdk:
- - Upgrade to version 0.X.Y.
+ - Upgrade MatrixSdk to version 0.X.Y.
 
 Features:
+ - keys backup: Implement setup screen (#2883)
+ - keys backup: Display a warning on new sign out screen (#2885)
+ - keys backup: recover screen #2887
+
+Improvements:
+ - Support Split-screen mode (#1832)
+ - Enable auto focus when taking picture with the camera (#2831)
+ - Better wording in notification for video call (#1421)
+ - Improve widget banner (#2129)
+ - Icon for Oreo (#2169)
+ - Notification settings re-organization, added bing rule troubleshoot
+ - Kotlin Code Improvement in VectorSettingsPreferencesFragment.kt
+ - Remove redundant !! , Replace it with null safe operators in VectorSettingsPreferencesFragment.kt
+ - `Redact` has been renamed to `Remove` to match riot/web (#2871)
+ - Remove long click download action in MediaViewer (#2882)
+
+Other changes:
+ - Update of Light and Dark themes (#2710)
+ - Restore the crash report dialog after a crash
+
+Bugfix:
+ - Fix crash when taking picture for user avatar on old device (#2818)
+ - Fix crash when adding background to image (#2828)
+ - LED notifications are not working (#2512)
+ - FCM Troubleshoot screen crash in some cases (#2846)
+ - Fix login button issue (#1568)
+ - Fix issue with registration when an email is provided (#2852)
+ - Fix issues with Tombstone events (#2866 && #2867)
+ - Fix crash on BugReportActivity if previous Activity is destroyed (#2876)
+ - Key share request does not go away when user select "verify" (#2781)
+
+Translations:
  -
+
+Build:
+ -
+
+Changes in Riot 0.8.21 (2019-01-02)
+===================================================
+
+MatrixSdk:
+ - Upgrade MatrixSdk to version 0.9.15.
 
 Improvements:
  - Show userId below display name in member detail screen (#2756)
  - Clicking on a user and a room avatar opens a new screen with animation to view the avatar in full screen, with zoom capabilities (#2455)
  - Added Troubleshoot Notification settings page
+ - Add badge to indicate number of group invitations on the Home Screen (#1923)
 
 Other changes:
- -
+ - Update README.md and CONTRIBUTING.md (#2795)
 
 Bugfix:
+ - Correct issue during signup when a 3PID error would let the signup flow spin forever
  - Defensive code for notifications issues + check play services as per FCM recommendation (#2266)
  - No notification on f-droid when device enters sleep mode (#2789)
  - Added ShortcutBadger missing permissions for some devices
@@ -26,13 +69,7 @@ Bugfix:
  - Fix avatar icon characters being a little bit offset to right.
  - Fix Stopping Loading View after Upload of User Avatar (#2801)
  - Fix no display of image without `info` (#2666)
-
-
-Translations:
- -
-
-Build:
- -
+ - Fix permission request failure. It was actually not necessary to request overlay permission (#2680)
 
 Changes in Riot 0.8.20 (2018-12-13)
 ===================================================
@@ -66,6 +103,7 @@ Features:
  - Add RTL support (#2376, #2271)
 
 Improvements:
+ - improve UI for VectorMediaPickerActivity and InviteMembersActivity (#2610)
  - Ability to crop profile picture before setting (#2598)
  - Add a setting of the room's info area visibility.
 
@@ -1136,11 +1174,11 @@ Changes in Vector 0.2.0 (2016-04-14)
 =======================================================
 
 
-Changes in Riot 0.8.XX (2018-XX-XX)
+Changes in Riot 0.8.XX (2019-XX-XX)
 ===================================================
 
 MatrixSdk:
- - Upgrade to version 0.X.Y.
+ - Upgrade MatrixSdk to version 0.X.Y.
 
 Features:
  -
@@ -1152,7 +1190,7 @@ Other changes:
  -
 
 Bugfix:
- - Correct issue during signup when a 3PID error would let the signup flow spin forever
+ -
 
 Translations:
  -
