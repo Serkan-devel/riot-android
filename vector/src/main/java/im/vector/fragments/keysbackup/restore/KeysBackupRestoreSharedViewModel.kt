@@ -20,13 +20,13 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import android.content.Context
 import im.vector.R
+import im.vector.activity.util.WaitingViewData
 import im.vector.ui.arch.LiveEvent
 import org.matrix.androidsdk.MXSession
 import org.matrix.androidsdk.crypto.data.ImportRoomKeysResult
 import org.matrix.androidsdk.rest.callback.ApiCallback
 import org.matrix.androidsdk.rest.model.MatrixError
 import org.matrix.androidsdk.rest.model.keys.KeysVersionResult
-import java.lang.Exception
 
 class KeysBackupRestoreSharedViewModel : ViewModel() {
 
@@ -48,7 +48,7 @@ class KeysBackupRestoreSharedViewModel : ViewModel() {
     val navigateEvent: LiveData<LiveEvent<String>>
         get() = _navigateEvent
 
-    var loadingEvent: MutableLiveData<LiveEvent<Int>> = MutableLiveData()
+    var loadingEvent: MutableLiveData<WaitingViewData> = MutableLiveData()
 
 
     var importKeyResult: ImportRoomKeysResult? = null
@@ -72,7 +72,8 @@ class KeysBackupRestoreSharedViewModel : ViewModel() {
             //can this happen?
             _keyVersionResultError.value = LiveEvent(context.getString(R.string.keys_backup_no_keysbackup_sdk_error))
         } else {
-            loadingEvent.value = LiveEvent(R.string.keys_backup_restore_is_getting_backup_version)
+            loadingEvent.value = WaitingViewData(context.getString(R.string.keys_backup_restore_is_getting_backup_version))
+
             keysBackup.getCurrentVersion(object : ApiCallback<KeysVersionResult?> {
                 override fun onSuccess(info: KeysVersionResult?) {
                     loadingEvent.value = null
@@ -91,7 +92,7 @@ class KeysBackupRestoreSharedViewModel : ViewModel() {
 
                 override fun onNetworkError(e: Exception) {
                     loadingEvent.value = null
-                    _keyVersionResultError.value = LiveEvent(context.getString(R.string.network_error_please_check_and_retry, e.localizedMessage))
+                    _keyVersionResultError.value = LiveEvent(context.getString(R.string.network_error_please_check_and_retry))
                 }
 
                 override fun onMatrixError(e: MatrixError) {
@@ -106,7 +107,7 @@ class KeysBackupRestoreSharedViewModel : ViewModel() {
         _navigateEvent.value = LiveEvent(NAVIGATE_TO_RECOVER_WITH_KEY)
     }
 
-    fun didSucceedWithKey(result: ImportRoomKeysResult) {
+    fun didRecoverSucceed(result: ImportRoomKeysResult) {
         importKeyResult = result
         _navigateEvent.value = LiveEvent(NAVIGATE_TO_SUCCESS)
     }

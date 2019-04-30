@@ -22,7 +22,6 @@ import android.os.Bundle
 import android.support.design.widget.TextInputLayout
 import android.support.transition.TransitionManager
 import android.text.TextUtils
-import android.view.MenuItem
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
@@ -87,23 +86,13 @@ class KeysBackupSetupStep2Fragment : VectorBaseFragment() {
             ViewModelProviders.of(this).get(KeysBackupSetupSharedViewModel::class.java)
         } ?: throw Exception("Invalid Activity")
 
+        viewModel.shouldPromptOnBack = true
         bindViewToViewModel()
     }
 
     /* ==========================================================================================
      * MENU
      * ========================================================================================== */
-
-    override fun getMenuRes() = R.menu.keys_backup_setup
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.ic_action_keybackup_setup_skip) {
-            skipPassphrase()
-            return true
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
 
     private fun bindViewToViewModel() {
         viewModel.passwordStrength.observe(this, Observer { strength ->
@@ -174,6 +163,7 @@ class KeysBackupSetupStep2Fragment : VectorBaseFragment() {
             }
             return@setOnEditorActionListener false
         }
+
     }
 
     @OnClick(R.id.keys_backup_view_show_password)
@@ -185,13 +175,13 @@ class KeysBackupSetupStep2Fragment : VectorBaseFragment() {
     fun doNext() {
         when {
             TextUtils.isEmpty(viewModel.passphrase.value) -> {
-                viewModel.passphraseError.value = context?.getString(R.string.keys_backup_passphrase_empty_error_message)
+                viewModel.passphraseError.value = context?.getString(R.string.passphrase_empty_error_message)
             }
             viewModel.passphrase.value != viewModel.confirmPassphrase.value -> {
-                viewModel.confirmPassphraseError.value = context?.getString(R.string.keys_backup_setup_step2_passphrase_no_match)
+                viewModel.confirmPassphraseError.value = context?.getString(R.string.passphrase_passphrase_does_not_match)
             }
             viewModel.passwordStrength.value?.score ?: 0 < 4 -> {
-                viewModel.passphraseError.value = context?.getString(R.string.keys_backup_setup_step2_passphrase_too_weak)
+                viewModel.passphraseError.value = context?.getString(R.string.passphrase_passphrase_too_weak)
             }
             else -> {
                 viewModel.megolmBackupCreationInfo = null
@@ -199,19 +189,13 @@ class KeysBackupSetupStep2Fragment : VectorBaseFragment() {
                 val session = (activity as? MXCActionBarActivity)?.session
                         ?: Matrix.getInstance(context)?.getSession(null)
 
-                viewModel.prepareRecoveryKey(session, viewModel.passphrase.value)
-
-                activity
-                        ?.supportFragmentManager
-                        ?.beginTransaction()
-                        ?.replace(R.id.container, KeysBackupSetupStep3Fragment.newInstance())
-                        ?.addToBackStack(null)
-                        ?.commit()
+                viewModel.prepareRecoveryKey(activity!!, session, viewModel.passphrase.value)
             }
         }
     }
 
-    private fun skipPassphrase() {
+    @OnClick(R.id.keys_backup_setup_step2_skip_button)
+    fun skipPassphrase() {
         when {
             TextUtils.isEmpty(viewModel.passphrase.value) -> {
                 // Generate a recovery key for the user
@@ -220,13 +204,7 @@ class KeysBackupSetupStep2Fragment : VectorBaseFragment() {
                 val session = (activity as? MXCActionBarActivity)?.session
                         ?: Matrix.getInstance(context)?.getSession(null)
 
-                viewModel.prepareRecoveryKey(session, null)
-                activity
-                        ?.supportFragmentManager
-                        ?.beginTransaction()
-                        ?.replace(R.id.container, KeysBackupSetupStep3Fragment.newInstance())
-                        ?.addToBackStack(null)
-                        ?.commit()
+                viewModel.prepareRecoveryKey(activity!!, session, null)
             }
             else -> {
                 // User has entered a passphrase but want to skip this step.

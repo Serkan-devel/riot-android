@@ -15,8 +15,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="36dp"
-            android:src="@drawable/shield"
-            android:tint="?android:textColorPrimary"
+            android:src="@drawable/key_big"
+            android:tint="?android:textColorTertiary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -50,12 +50,11 @@
                 android:id="@+id/keys_backup_passphrase_enter_edittext"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/keys_backup_setup_step2_passphrase_enter_hint"
+                android:hint="@string/passphrase_enter_passphrase"
                 android:maxLines="3"
                 android:singleLine="false"
                 android:textColor="?android:textColorPrimary"
-                tools:inputType="textPassword"
-                tools:text="foo" />
+                tools:inputType="textPassword" />
 
         </android.support.design.widget.TextInputLayout>
 
@@ -83,15 +82,17 @@
             tools:text="@string/keys_backup_restore_with_passphrase_helper_with_link" />
 
         <Button
-            android:id="@+id/keys_backup_setup_step2_button"
+            android:id="@+id/keys_backup_restore_with_passphrase_submit"
             style="@style/VectorButtonStyle"
-            android:layout_margin="20dp"
+            android:layout_marginTop="@dimen/layout_vertical_margin_big"
+            android:layout_marginEnd="@dimen/layout_horizontal_margin"
+            android:layout_marginRight="@dimen/layout_horizontal_margin"
+            android:layout_marginBottom="@dimen/layout_vertical_margin_big"
             android:minWidth="200dp"
             android:padding="16dp"
             android:text="@string/keys_backup_unlock_button"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/keys_backup_passphrase_help_with_link" />
 
     </android.support.constraint.ConstraintLayout>

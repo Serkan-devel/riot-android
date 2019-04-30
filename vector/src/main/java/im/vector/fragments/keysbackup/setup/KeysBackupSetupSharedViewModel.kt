@@ -18,7 +18,11 @@ package im.vector.fragments.keysbackup.setup
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
+import android.content.Context
 import com.nulabinc.zxcvbn.Strength
+import im.vector.R
+import im.vector.activity.util.WaitingViewData
+import im.vector.ui.arch.LiveEvent
 import org.matrix.androidsdk.MXSession
 import org.matrix.androidsdk.crypto.keysbackup.KeysBackup
 import org.matrix.androidsdk.crypto.keysbackup.MegolmBackupCreationInfo
@@ -33,6 +37,21 @@ import org.matrix.androidsdk.util.Log
  * The shared view model between all fragments.
  */
 class KeysBackupSetupSharedViewModel : ViewModel() {
+
+    companion object {
+        const val NAVIGATE_TO_STEP_2 = "NAVIGATE_TO_STEP_2"
+        const val NAVIGATE_TO_STEP_3 = "NAVIGATE_TO_STEP_3"
+        const val NAVIGATE_FINISH = "NAVIGATE_FINISH"
+        const val NAVIGATE_MANUAL_EXPORT = "NAVIGATE_MANUAL_EXPORT"
+        private val LOG_TAG = KeysBackupSetupSharedViewModel::class.java.name
+    }
+
+    lateinit var session: MXSession
+
+    var showManualExport: MutableLiveData<Boolean> = MutableLiveData()
+
+    var navigateEvent: MutableLiveData<LiveEvent<String>> = MutableLiveData()
+    var shouldPromptOnBack = true
 
     // Step 2
     var passphrase: MutableLiveData<String> = MutableLiveData()
@@ -49,13 +68,14 @@ class KeysBackupSetupSharedViewModel : ViewModel() {
     private var currentRequestId: MutableLiveData<Long> = MutableLiveData()
     var recoveryKey: MutableLiveData<String> = MutableLiveData()
     var prepareRecoverFailError: MutableLiveData<Exception> = MutableLiveData()
-    var prepareRecoveryProgressProgress: MutableLiveData<Int> = MutableLiveData()
-    var prepareRecoveryProgressTotal: MutableLiveData<Int> = MutableLiveData()
     var megolmBackupCreationInfo: MegolmBackupCreationInfo? = null
     var copyHasBeenMade = false
     var isCreatingBackupVersion: MutableLiveData<Boolean> = MutableLiveData()
     var creatingBackupError: MutableLiveData<Exception> = MutableLiveData()
     var keysVersion: MutableLiveData<KeysVersion> = MutableLiveData()
+
+
+    var loadingStatus: MutableLiveData<WaitingViewData> = MutableLiveData()
 
     init {
         showPasswordMode.value = false
@@ -63,18 +83,25 @@ class KeysBackupSetupSharedViewModel : ViewModel() {
         isCreatingBackupVersion.value = false
         prepareRecoverFailError.value = null
         creatingBackupError.value = null
+        loadingStatus.value = null
     }
 
-    fun prepareRecoveryKey(session: MXSession?, withPassphrase: String?) {
+    fun initSession(session: MXSession) {
+        this.session = session
+    }
+
+    fun prepareRecoveryKey(context: Context, session: MXSession?, withPassphrase: String?) {
         // Update requestId
         currentRequestId.value = System.currentTimeMillis()
+        isCreatingBackupVersion.value = true
+
+        // Ensure passphrase is hidden during the process
+        showPasswordMode.value = false
 
         recoveryKey.value = null
         prepareRecoverFailError.value = null
         session?.let { mxSession ->
             val requestedId = currentRequestId.value!!
-
-            prepareRecoveryProgressProgress.value = -1
 
             mxSession.crypto?.keysBackup?.prepareKeysBackupVersion(withPassphrase,
                     object : ProgressListener {
@@ -83,8 +110,10 @@ class KeysBackupSetupSharedViewModel : ViewModel() {
                                 //this is an old request, we can't cancel but we can ignore
                                 return
                             }
-                            prepareRecoveryProgressProgress.value = progress
-                            prepareRecoveryProgressTotal.value = total
+
+                            loadingStatus.value = WaitingViewData(context.getString(R.string.keys_backup_setup_step3_generating_key_status),
+                                    progress,
+                                    total)
                         }
                     },
                     object : SuccessErrorCallback<MegolmBackupCreationInfo> {
@@ -96,6 +125,16 @@ class KeysBackupSetupSharedViewModel : ViewModel() {
                             recoveryKey.value = info.recoveryKey
                             megolmBackupCreationInfo = info
                             copyHasBeenMade = false
+
+                            val keyBackup = session?.crypto?.keysBackup
+                            if (keyBackup != null) {
+                                createKeysBackup(context, keyBackup)
+                            } else {
+                                loadingStatus.value = null
+
+                                isCreatingBackupVersion.value = false
+                                prepareRecoverFailError.value = Exception()
+                            }
                         }
 
                         override fun onUnexpectedError(e: java.lang.Exception?) {
@@ -103,43 +142,54 @@ class KeysBackupSetupSharedViewModel : ViewModel() {
                                 //this is an old request, we can't cancel but we can ignore
                                 return
                             }
+
+                            loadingStatus.value = null
+
+                            isCreatingBackupVersion.value = false
                             prepareRecoverFailError.value = e ?: Exception()
                         }
                     })
         }
     }
 
-    fun createKeysBackup(keysBackup: KeysBackup) {
-        isCreatingBackupVersion.value = true
+    private fun createKeysBackup(context: Context, keysBackup: KeysBackup) {
+        loadingStatus.value = WaitingViewData(context.getString(R.string.keys_backup_setup_creating_backup), isIndeterminate = true)
+
         creatingBackupError.value = null
         keysBackup.createKeysBackupVersion(megolmBackupCreationInfo!!, object : ApiCallback<KeysVersion> {
 
             override fun onSuccess(info: KeysVersion) {
+                loadingStatus.value = null
+
                 isCreatingBackupVersion.value = false
                 keysVersion.value = info
+                navigateEvent.value = LiveEvent(NAVIGATE_TO_STEP_3)
             }
 
             override fun onUnexpectedError(e: java.lang.Exception) {
                 Log.e(LOG_TAG, "## createKeyBackupVersion ${e.localizedMessage}")
+                loadingStatus.value = null
+
                 isCreatingBackupVersion.value = false
                 creatingBackupError.value = e
             }
 
             override fun onNetworkError(e: java.lang.Exception) {
                 Log.e(LOG_TAG, "## createKeyBackupVersion ${e.localizedMessage}")
+                loadingStatus.value = null
+
                 isCreatingBackupVersion.value = false
                 creatingBackupError.value = e
             }
 
             override fun onMatrixError(e: MatrixError) {
                 Log.e(LOG_TAG, "## createKeyBackupVersion ${e.mReason}")
+                loadingStatus.value = null
+
                 isCreatingBackupVersion.value = false
                 creatingBackupError.value = Exception(e.message)
             }
         })
     }
 
-    companion object {
-        private val LOG_TAG = KeysBackupSetupSharedViewModel::class.java.name
-    }
 }
